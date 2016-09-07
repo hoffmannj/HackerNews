@@ -11,7 +11,6 @@ namespace HackerNews
 {
     class Program
     {
-        private static NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger(typeof(Program));
         private const int MINPOSTSCOUNT = 1;
         private const int MAXPOSTSCOUNT = 100;
 
@@ -33,8 +32,6 @@ namespace HackerNews
             if (result == null) return;
 
             Console.Out.WriteLine(Newtonsoft.Json.JsonConvert.SerializeObject(result, Newtonsoft.Json.Formatting.Indented));
-
-            NLog.LogManager.Configuration = null;
         }
 
         private static bool HandleArguments(string[] args)
