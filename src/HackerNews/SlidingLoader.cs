@@ -27,7 +27,7 @@ namespace HackerNews
             _loaderFunc = loaderFunc;
             _windowSize = 20;
             _windowStart = 0;
-            _windowItems = new ConcurrentDictionary<T, U>(4, _windowSize);
+            _windowItems = new ConcurrentDictionary<T, U>(4, keyList.Count);
             LoadWindow();
         }
 
