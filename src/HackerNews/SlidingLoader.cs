@@ -1,6 +1,5 @@
 ﻿using HackerNews.Helpers;
-using HackerNews.Interfaces;
-using HackerNews.Models;
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
@@ -8,25 +7,27 @@ using System.Linq;
 namespace HackerNews
 {
     /// <summary>
-    /// Parallel data loader that loads data in batches (aka. windows)
+    /// Parallel generic data loader that loads data in batches (aka. windows)
+    /// IMPORTANT: Type T used as key in a dictionary, so make sure GetHashCode() is properly implemented
+    /// This class uses 4 as the default level of concurrency, and the default window size is 20.
     /// </summary>
-    class SlidingLoader
+    class SlidingLoader<T, U>
     {
-        private List<int> _idList;
+        private List<T> _keyList;
         private int _windowStart;
         private int _windowSize;
-        private ConcurrentDictionary<int, HackerNewsItem> _windowItems;
-        private IApi _api;
+        private Func<T, U> _loaderFunc;
+        private ConcurrentDictionary<T, U> _windowItems;
 
-        public SlidingLoader(IApi api, List<int> idList)
+        public SlidingLoader(List<T> keyList, Func<T, U> loaderFunc)
         {
-            AssertHelper.AssertArgumentNotNull(api, "api");
-            AssertHelper.AssertArgumentNotNull(idList, "idList");
-            _api = api;
-            _idList = new List<int>(idList);
+            AssertHelper.AssertArgumentNotNull(keyList, "keyList");
+            AssertHelper.AssertArgumentNotNull(loaderFunc, "loaderFunc");
+            _keyList = new List<T>(keyList);
+            _loaderFunc = loaderFunc;
             _windowSize = 20;
             _windowStart = 0;
-            _windowItems = new ConcurrentDictionary<int, HackerNewsItem>(8, _windowSize);
+            _windowItems = new ConcurrentDictionary<T, U>(4, _windowSize);
             LoadWindow();
         }
 
@@ -36,17 +37,17 @@ namespace HackerNews
         /// </summary>
         private void LoadWindow()
         {
-            var toTransform = _idList.Skip(_windowStart).Take(_windowSize).ToList();
+            var toTransform = _keyList.Skip(_windowStart).Take(_windowSize).ToList();
             toTransform.AsParallel().ForAll(id =>
             {
-                var item = _api.GetItem(id).Result;
-                _windowItems.AddOrUpdate(item.Id, item, (key, oldValue) => item);
+                var item = _loaderFunc(id);
+                _windowItems.AddOrUpdate(id, item, (key, oldValue) => item);
             });
         }
 
         public bool CanSlide()
         {
-            return (_idList.Count - _windowStart) > _windowSize;
+            return (_keyList.Count - _windowStart) > _windowSize;
         }
 
         /// <summary>
@@ -62,16 +63,16 @@ namespace HackerNews
         /// Returns with the data ordered by the IDs
         /// </summary>
         /// <returns>List of HackerNewsItem</returns>
-        public List<HackerNewsItem> GetWindowItems()
+        public List<U> GetWindowItems()
         {
-            var result = new List<HackerNewsItem>();
+            var result = new List<U>();
             for (int i = 0; i < _windowSize; ++i)
             {
-                if (_windowStart + i >= _idList.Count) break;
-                HackerNewsItem item = null;
-                if (_windowItems.ContainsKey(_idList[_windowStart + i]))
+                if (_windowStart + i >= _keyList.Count) break;
+                U item = default(U);
+                if (_windowItems.ContainsKey(_keyList[_windowStart + i]))
                 {
-                    item = _windowItems[_idList[_windowStart + i]];
+                    item = _windowItems[_keyList[_windowStart + i]];
                 }
                 result.Add(item);
             }

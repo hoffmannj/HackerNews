@@ -29,7 +29,7 @@ namespace HackerNews
             var result = new List<OutputItem>();
             try
             {
-                var loader = new SlidingLoader(_api, inputList);
+                var loader = new SlidingLoader<int, HackerNewsItem>(inputList, id => _api.GetItem(id).Result);
                 while (result.Count < maxCount)
                 {
                     var items = loader.GetWindowItems();
