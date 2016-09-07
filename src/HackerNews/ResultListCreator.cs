@@ -23,6 +23,12 @@ namespace HackerNews
             _api = api;
         }
 
+        /// <summary>
+        /// Creates the result list (list of OutputItems) using the SlidingLoader
+        /// </summary>
+        /// <param name="inputList">List of story IDs</param>
+        /// <param name="maxCount">Required number of result items</param>
+        /// <returns>List of OutputItems</returns>
         public List<OutputItem> CreateResultList(List<int> inputList, int maxCount)
         {
             AssertHelper.AssertArgumentNotNull(inputList, "inputList");
