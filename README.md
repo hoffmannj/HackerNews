@@ -1,6 +1,8 @@
 # HackerNews
 Small Hacker News Scraper
 
+![Build status](https://ci.appveyor.com/api/projects/status/0cchr9wjv1iixywp?svg=true)
+
 ### Usage
 
 ```cmd
